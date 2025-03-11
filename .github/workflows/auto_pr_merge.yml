@@ -2,9 +2,9 @@ name: Auto Update and Merge
 
 on:
   schedule:
-    - cron: "0 * * * *"  
+    - cron: "0 * * * *"  # 毎時0分に実行
 
-  workflow_dispatch:
+  workflow_dispatch:  # 手動実行も可能
 
 jobs:
   update-and-merge:
@@ -14,7 +14,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ref: feature-branch 
+          ref: feature-branch  # 変更対象のブランチ
+          token: ${{ secrets.GITHUB_TOKEN }}  # 認証を追加
 
       - name: Modify a file
         run: |
@@ -23,14 +24,14 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add auto_update.log
           git commit -m "Automated update at $(date)"
-          git push origin feature-branch
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git feature-branch
 
       - name: Create Pull Request
         id: create_pr
         uses: peter-evans/create-pull-request@v6
         with:
-          base: main 
-          branch: feature-branch 
+          base: main  # マージ先のブランチ
+          branch: feature-branch  # PRを作成するブランチ
           title: "Auto-generated PR"
           body: "This PR was automatically generated and merged."
           labels: automated
