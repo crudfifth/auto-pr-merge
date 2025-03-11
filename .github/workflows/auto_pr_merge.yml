@@ -2,8 +2,8 @@ name: Auto Update and Merge
 
 on:
   schedule:
-    - cron: "0 * * * *"  # 毎時0分に実行
-  workflow_dispatch:  # 手動実行も可能
+    - cron: "0 * * * *"
+  workflow_dispatch:
 
 jobs:
   update-and-merge:
@@ -38,9 +38,13 @@ jobs:
           body: "This PR was automatically generated."
           labels: automated
           draft: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Wait for PR creation
-        run: sleep 10  # PR 作成の待機（GitHub の処理遅延対策）
+      - name: Debug PR creation
+        run: |
+          echo "PR created with operation: ${{ steps.create_pr.outputs.pull-request-operation }}"
+
 
       - name: Auto Merge PR
         if: steps.create_pr.outputs.pull-request-operation == 'created'
