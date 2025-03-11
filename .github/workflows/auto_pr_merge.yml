@@ -24,14 +24,14 @@ jobs:
       - name: Ensure feature branch is different from main
         run: |
           git fetch origin main
-          if ! git diff --quiet origin/main; then
-            echo "Detected changes, proceeding with PR creation."
-          else
+          if git diff --quiet origin/main; then
             echo "No changes detected, forcing a minor update."
-            echo "Forced update at $(date)" >> auto_update.log
+            date > auto_update.log  # 明示的に変更を加える
             git add auto_update.log
             git commit -m "Forced update to create a PR"
             git push origin feature-branch
+          else
+            echo "Changes detected, skipping forced update."
           fi
 
       - name: Create Pull Request
