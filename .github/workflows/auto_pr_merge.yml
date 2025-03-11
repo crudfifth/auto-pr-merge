@@ -35,9 +35,10 @@ jobs:
           base: main
           branch: feature-branch
           title: "Auto-generated PR"
-          body: "This PR was automatically generated."
+          body: "This PR was automatically generated and merged."
           labels: automated
           draft: false
+
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -49,6 +50,7 @@ jobs:
       - name: Auto Merge PR
         if: steps.create_pr.outputs.pull-request-operation == 'created'
         run: |
+          echo "Merging PR #${{ steps.create_pr.outputs.pull-request-number }}"
           gh pr merge --auto --squash --delete-branch --repo ${{ github.repository }} ${{ steps.create_pr.outputs.pull-request-number }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
