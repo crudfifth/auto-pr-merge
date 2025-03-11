@@ -5,10 +5,6 @@ on:
     - cron: "0 * * * *"
   workflow_dispatch:
 
-permissions:
-  contents: write
-  pull-requests: write
-
 jobs:
   update-and-merge:
     runs-on: ubuntu-latest
@@ -21,18 +17,15 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           ref: feature-branch
 
-      - name: Ensure feature branch is different from main
+      - name: Force sync feature-branch with main
         run: |
           git fetch origin main
-          if git diff --quiet origin/main; then
-            echo "No changes detected, forcing a minor update."
-            date > auto_update.log  # 明示的に変更を加える
-            git add auto_update.log
-            git commit -m "Forced update to create a PR"
-            git push origin feature-branch
-          else
-            echo "Changes detected, skipping forced update."
-          fi
+          git checkout feature-branch
+          git reset --hard origin/main  # feature-branch を main に完全同期
+          echo "Forced update at $(date)" > auto_update.log  # 確実に変更を加える
+          git add auto_update.log
+          git commit -m "Forced update to create a PR"
+          git push --force origin feature-branch  # 強制プッシュ
 
       - name: Create Pull Request
         id: create_pr
@@ -44,14 +37,16 @@ jobs:
           body: "This PR was automatically generated and merged."
           labels: automated
           draft: false
-          commit-message: "Automated PR update"
+
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Debug PR creation
         run: |
           echo "PR created with operation: ${{ steps.create_pr.outputs.pull-request-operation }}"
 
       - name: Auto Merge PR
-        if: steps.create_pr.outputs.pull-request-number != ''
+        if: steps.create_pr.outputs.pull-request-operation == 'created'
         run: |
           echo "Merging PR #${{ steps.create_pr.outputs.pull-request-number }}"
           gh pr merge --auto --squash --delete-branch --repo ${{ github.repository }} ${{ steps.create_pr.outputs.pull-request-number }}
