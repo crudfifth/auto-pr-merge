@@ -20,7 +20,6 @@ jobs:
       - name: Modify a file
         run: |
           echo "$(date)" >> auto_update.log
-          echo "dummy-change" >> auto_update.log  # 強制的に変更を加える
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add auto_update.log
@@ -37,8 +36,6 @@ jobs:
           body: "This PR was automatically generated and merged."
           labels: automated
           draft: false
-          delete-branch: true  # PRがマージされたらブランチ削除
-          branch-suffix: timestamp  # ブランチ名をユニークにする
 
       - name: Auto Merge PR
         if: steps.create_pr.outputs.pull-request-operation == 'created'
