@@ -17,21 +17,12 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           ref: feature-branch
 
-      - name: Modify a file
-        run: |
-          echo "$(date) - Auto update test" >> auto_update.log
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add auto_update.log
-          git commit -m "Automated update at $(date)" || echo "No changes to commit"
-          git push origin feature-branch
-
       - name: Ensure feature branch is different from main
         run: |
           git fetch origin main
           if git diff --quiet origin/main; then
             echo "No changes detected, forcing a minor update."
-            echo "Minor update to force diff" >> auto_update.log
+            echo "Forced update at $(date)" >> auto_update.log
             git add auto_update.log
             git commit -m "Forced update to create a PR"
             git push origin feature-branch
@@ -47,6 +38,9 @@ jobs:
           body: "This PR was automatically generated."
           labels: automated
           draft: false
+
+      - name: Wait for PR creation
+        run: sleep 10  # PR 作成の待機（GitHub の処理遅延対策）
 
       - name: Auto Merge PR
         if: steps.create_pr.outputs.pull-request-operation == 'created'
