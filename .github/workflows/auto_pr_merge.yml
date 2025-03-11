@@ -5,6 +5,10 @@ on:
     - cron: "0 * * * *"
   workflow_dispatch:
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   update-and-merge:
     runs-on: ubuntu-latest
@@ -20,7 +24,9 @@ jobs:
       - name: Ensure feature branch is different from main
         run: |
           git fetch origin main
-          if git diff --quiet origin/main; then
+          if ! git diff --quiet origin/main; then
+            echo "Detected changes, proceeding with PR creation."
+          else
             echo "No changes detected, forcing a minor update."
             echo "Forced update at $(date)" >> auto_update.log
             git add auto_update.log
@@ -38,17 +44,14 @@ jobs:
           body: "This PR was automatically generated and merged."
           labels: automated
           draft: false
-
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "Automated PR update"
 
       - name: Debug PR creation
         run: |
           echo "PR created with operation: ${{ steps.create_pr.outputs.pull-request-operation }}"
 
-
       - name: Auto Merge PR
-        if: steps.create_pr.outputs.pull-request-operation == 'created'
+        if: steps.create_pr.outputs.pull-request-number != ''
         run: |
           echo "Merging PR #${{ steps.create_pr.outputs.pull-request-number }}"
           gh pr merge --auto --squash --delete-branch --repo ${{ github.repository }} ${{ steps.create_pr.outputs.pull-request-number }}
