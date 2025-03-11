@@ -13,15 +13,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          repository: ${{ github.repository }}  # 明示的にリポジトリを指定
-          token: ${{ secrets.GITHUB_TOKEN }}  # 認証を追加
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}  
           ref: feature-branch  # 変更対象のブランチ
+          fetch-depth: 0 # フルクローン
 
       - name: Modify a file
         run: |
           echo "$(date)" >> auto_update.log
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "${{ github.actor }}"
+          git config --global user.email "${{ github.actor }}@users.noreply.github.com"
           git add auto_update.log
           git commit -m "Automated update at $(date)" || echo "No changes to commit"
           git push origin feature-branch
@@ -30,7 +30,7 @@ jobs:
         id: create_pr
         uses: peter-evans/create-pull-request@v6
         with:
-          base: main  # マージ先のブランチ
+          base: main  # マージ先ブランチ
           branch: feature-branch  # PRを作成するブランチ
           title: "Auto-generated PR"
           body: "This PR was automatically generated and merged."
@@ -42,4 +42,4 @@ jobs:
         run: |
           gh pr merge --auto --squash --delete-branch --repo ${{ github.repository }} ${{ steps.create_pr.outputs.pull-request-number }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
